@@ -68,12 +68,12 @@ int update() //Basic HMC update step
     g_X[i].s2 = (gauss() + I*gauss())/sqrt(2);
   }
   squnrm = square_norm(g_X);
-  
+  if(gauge_only==0){
   // step iv): g_fermion = \phi = K^dag * g_X = K^dag * \xi
   gam5D_wilson(g_fermion, g_X);
   assign_diff_mul(g_fermion, g_X, 0.+I*sqrt(g_musqr));
   ham_old += squnrm;
-
+	}
   /* PF2 det((Q^2 + mu^2)/Q^2) */
   if(no_timescales > 2) {
     for(i=0; i<GRIDPOINTS; i++) {
@@ -81,13 +81,14 @@ int update() //Basic HMC update step
       g_X[i].s2 = (gauss() + I*gauss())/sqrt(2);
     }
     squnrm = square_norm(g_X);
-
+	if(gauge_only==0){
     cg(g_fermion2, g_X, ITER_MAX, DELTACG, &gam5D_SQR_musqr_wilson);    
     gam5D_wilson(g_gam5DX, g_fermion2);
     assign_add_mul(g_gam5DX, g_fermion2, 0.+I*sqrt(g_musqr));
     gam5D_wilson(g_fermion2, g_gam5DX);
     ham_old += squnrm;
   }
+	}
   // Add the part for the fermion fields
 
   // Do the molecular dynamic chain
@@ -98,8 +99,10 @@ int update() //Basic HMC update step
 
   /* This is the recursive implementation */
   /* in can be found in rec_lf_integrator.c|h */
-  if (no_timescales == 1)
-    leapfrog(n_steps[0], tau/n_steps[0]);
+  if (no_timescales == 1){
+		if(gauge_only==0)    leapfrog(n_steps[0], tau/n_steps[0]);
+		else 	    leapfrog_nf(n_steps[0], tau/n_steps[0]);
+	}
   else
     integrate_leap_frog(tau/n_steps[no_timescales-1], no_timescales-1, no_timescales, n_steps, 1, up_momenta);
   
@@ -112,16 +115,17 @@ int update() //Basic HMC update step
   }
   /* Sum_ij [(g_fermion^*)_i (Q^-1)_ij (g_fermion)_j]  =  Sum_ij [(g_fermion^*)_i (g_X)_i] */
   ham += s_g;
-  // add in the part for the fermion fields.
+	if(gauge_only==0){  
+	// add in the part for the fermion fields.
   cg(g_X, g_fermion, ITER_MAX, DELTACG, &gam5D_SQR_musqr_wilson);
   ham += scalar_prod_r(g_fermion, g_X);
-  
+	}  
   if(no_timescales > 2) {
     cg(g_gam5DX, g_fermion2, ITER_MAX, DELTACG, &gam5D_SQR_wilson);
     gam5D_SQR_musqr_wilson(g_X, g_temp, g_gam5DX);
     ham += scalar_prod_r(g_fermion2, g_X);
   }
-
+	
   exphdiff = exp(ham_old-ham);
   acc = accept(exphdiff);
  
@@ -163,7 +167,6 @@ int accept(const double exphdiff)
   }
   return acc;
 }
-
 
 
 

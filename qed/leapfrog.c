@@ -45,3 +45,33 @@ void update_gauge(const double dtau) {
   calculatelinkvars();
   return;
 }
+
+/*  leap frog */
+void leapfrog_nf(const int nsteps, const double dtau) {
+  int l;
+
+  /* first phase: \Delta\Tau / 2 step for p */
+  update_momenta_nf(0.5*dtau); 
+
+  /*  second phase: iterate with steps of \Delta\Tau */
+  for(l = 0; l < nsteps-1; l++) {
+    update_gauge(dtau);
+    update_momenta_nf(dtau);
+  }
+  /* a last one for the fields (because N steps for fields, */
+  /*      and N-1 steps for impulses) */
+  update_gauge(dtau);
+
+  /*  last phase: \Delta\Tau / 2 step for p */
+  update_momenta_nf(dtau*0.5);
+}
+
+void update_momenta_nf(const double dtau) 
+{
+  int i;
+  for(i = 0; i < GRIDPOINTS; i++) {
+    gp1[i] = gp1[i] - dtau*DS_G1(i);
+    gp2[i] = gp2[i] - dtau*DS_G2(i) ;
+  }
+  return;
+}

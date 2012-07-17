@@ -31,6 +31,13 @@ void echo_sim_params();
 void save_gauge(const char *filename);
 void load_gauge(const char *filename);
 
+/* Variable for gauge theory only (no fermions)*/
+/* gauge_only =1 => gauge theory only          */
+/* gauge_only = 0 => fermions included         */
+/* use option --nf to turn off fermions        */
+int gauge_only=0;
+
+
 /* The following we need for the recursive integration scheme */
 /* the integration step numbers for the different time scales */
 int n_steps[3];
@@ -62,9 +69,12 @@ int main(int argc, char **argv)
     {"tau", required_argument, NULL, 0},
     {"thermalize_min_acc", required_argument, NULL, 0},
     {"no_timescales", required_argument, NULL, 0},
+  	{"nf",no_argument,NULL,0},
     {0, 0, 0, 0}
   };
   
+
+
   while (1)
   {
     int option_index = 0;
@@ -106,7 +116,7 @@ int main(int argc, char **argv)
       thermalize_min_acc = optionDoubleValue;
     else if (strcmp(optionName, "no_timescales") == 0)
       no_timescales = optionDoubleValue;
-  }
+	}
   
   // setup integration parameters
   /* most inner steps per next outer step  */
@@ -146,9 +156,20 @@ int main(int argc, char **argv)
   init_lattice(X1, X2);
   /* Initialize the fields */
   coldstart();
+
+	/*check for gauge field only*/
+	for(i=0;i<argc;i++){
+		if(strcmp(argv[i],"--nf")==0){
+			gauge_only=1;
+			no_timescales=1;
+		}	
+	}
+
   /* Print out the run parameters */
+
   echo_sim_params(); 
-  
+	if(gauge_only==1) printf("Gauge field only! / No fermions are used\n");
+
   /* thermalization */
   printf("\n Thermalization: \n\n");
   char dump_filename[1000];

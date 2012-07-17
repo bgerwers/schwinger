@@ -23,6 +23,7 @@ extern int n_steps[3];
 extern up_m up_momenta[3];
 extern int no_timescales;
 extern double tau;
+extern int gauge_only;
 
 extern int R;  // Counter of all accepted configurations
 extern int g_cgiterations1, g_cgiterations2;
